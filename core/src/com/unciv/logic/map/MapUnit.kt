@@ -104,9 +104,13 @@ class MapUnit {
         if (type.isWaterUnit() && civInfo.nation.unique == "+2 movement for all naval units")
             movement += 2
 
-        if(civInfo.goldenAges.isGoldenAge() &&
+        if (type == UnitType.Mounted &&
+                civInfo.nation.unique == "Combat Strength +30% when fighting City-State units or attacking a City-State itself. All mounted units have +1 Movement.")
+            movement += 1
+
+        if (civInfo.goldenAges.isGoldenAge() &&
                 civInfo.nation.unique=="Golden Ages last 50% longer. During a Golden Age, units receive +1 Movement and +10% Strength")
-            movement+=1
+            movement += 1
 
         return movement
     }
@@ -348,6 +352,8 @@ class MapUnit {
             if(currentTurnsFortified<2)
                 action = action!!.replace(currentTurnsFortified.toString(),(currentTurnsFortified+1).toString(), true)
         }
+        if (hasUnique("Heal adjacent units for an additional 15 HP per turn"))
+            currentTile.neighbors.flatMap{ it.getUnits() }.forEach{ it.healBy(15) }
     }
 
     private fun workOnImprovement() {
@@ -501,7 +507,7 @@ class MapUnit {
     private fun clearEncampment(tile: TileInfo) {
         tile.improvement = null
 
-        var goldGained = civInfo.getDifficulty().clearBarbarianCampReward * civInfo.gameInfo.gameParameters.gameSpeed.getModifier()
+        var goldGained = civInfo.getDifficulty().clearBarbarianCampReward * civInfo.gameInfo.gameParameters.gameSpeed.modifier
         if (civInfo.nation.unique == "Receive triple Gold from Barbarian encampments and pillaging Cities. Embarked units can defend themselves.")
             goldGained *= 3f
 

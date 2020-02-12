@@ -412,7 +412,8 @@ class CivilizationInfo {
                     val unitToDisband = civMilitaryUnits.first()
                     unitToDisband.destroy()
                     civMilitaryUnits -= unitToDisband
-                    addNotification("Cannot provide unit upkeep for " + unitToDisband.name + " - unit has been disbanded!".tr(), null, Color.RED)
+                    val unitName = unitToDisband.name
+                    addNotification("Cannot provide unit upkeep for [$unitName] - unit has been disbanded!", null, Color.RED)
                 }
             }
         }
@@ -466,8 +467,9 @@ class CivilizationInfo {
     }
 
     fun addGreatPerson(greatPerson: String, city:CityInfo) {
-        placeUnitNearTile(city.location, greatPerson)
-        addNotification("A [$greatPerson] has been born in [${city.name}]!", city.location, Color.GOLD)
+        val greatPersonName = getEquivalentUnit(greatPerson).name
+        placeUnitNearTile(city.location, greatPersonName)
+        addNotification("A [$greatPersonName] has been born in [${city.name}]!", city.location, Color.GOLD)
     }
 
     fun placeUnitNearTile(location: Vector2, unitName: String, removeImprovement: Boolean = false): MapUnit? {
@@ -512,7 +514,7 @@ class CivilizationInfo {
             TechEra.Information, TechEra.Future -> 400
             else -> 0
         }
-        return (basicGoldCostOfSignResearchAgreement * gameInfo.gameParameters.gameSpeed.getModifier()).toInt()
+        return (basicGoldCostOfSignResearchAgreement * gameInfo.gameParameters.gameSpeed.modifier).toInt()
     }
 
     fun giftMilitaryUnitTo(otherCiv: CivilizationInfo) {

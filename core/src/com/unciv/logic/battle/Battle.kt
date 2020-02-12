@@ -5,6 +5,7 @@ import com.unciv.Constants
 import com.unciv.UncivGame
 import com.unciv.logic.city.CityInfo
 import com.unciv.logic.civilization.AlertType
+import com.unciv.logic.civilization.CivilizationInfo
 import com.unciv.logic.civilization.PopupAlert
 import com.unciv.logic.civilization.diplomacy.DiplomaticModifiers
 import com.unciv.logic.map.RoadStatus
@@ -31,7 +32,8 @@ object Battle {
     }
 
     fun attack(attacker: ICombatant, defender: ICombatant) {
-        println(attacker.getCivInfo().civName+" "+attacker.getName()+" attacked "+defender.getCivInfo().civName+" "+defender.getName())
+        println(attacker.getCivInfo().civName+" "+attacker.getName()+" attacked "+
+                defender.getCivInfo().civName+" "+defender.getName())
         val attackedTile = defender.getTile()
 
         if(attacker is MapUnitCombatant && attacker.getUnitType().isAirUnit()){
@@ -221,17 +223,24 @@ object Battle {
         if(thisCombatant !is MapUnitCombatant) return
         if(thisCombatant.unit.promotions.totalXpProduced() >= 30 && otherCombatant.getCivInfo().isBarbarian())
             return
-        var amountToAdd = amount
-        if(thisCombatant.getCivInfo().policies.isAdopted("Military Tradition")) amountToAdd = (amountToAdd * 1.5f).toInt()
-        thisCombatant.unit.promotions.XP += amountToAdd
 
+        var XPModifier = 1f
+        if (thisCombatant.getCivInfo().policies.isAdopted("Military Tradition")) XPModifier += 0.5f
+        if (thisCombatant.unit.hasUnique("50% Bonus XP gain")) XPModifier += 0.5f
+
+        val XPGained = (amount * XPModifier).toInt()
+        thisCombatant.unit.promotions.XP += XPGained
+
+
+        var greatGeneralPointsModifier = 1f
         if(thisCombatant.getCivInfo().nation.unique
                 == "Great general provides double combat bonus, and spawns 50% faster")
-            amountToAdd = (amountToAdd * 1.5f).toInt()
+            greatGeneralPointsModifier += 0.5f
         if(thisCombatant.unit.hasUnique("Combat very likely to create Great Generals"))
-            amountToAdd *= 2
+            greatGeneralPointsModifier += 1f
 
-        thisCombatant.getCivInfo().greatPeople.greatGeneralPoints += amountToAdd
+        val greatGeneralPointsGained = (XPGained * greatGeneralPointsModifier).toInt()
+        thisCombatant.getCivInfo().greatPeople.greatGeneralPoints += greatGeneralPointsGained
     }
 
     private fun conquerCity(city: CityInfo, attacker: ICombatant) {
@@ -278,10 +287,8 @@ object Battle {
             return
         }
 
-        if (defender.getCivInfo().isDefeated()) {//Last settler captured
-            defender.getCivInfo().destroy()
-            attacker.getCivInfo().popupAlerts.add(PopupAlert(AlertType.Defeated,defender.getCivInfo().civName))
-        }
+        // need to save this because if the unit is captured its owner wil be overwritten
+        val defenderCiv = defender.getCivInfo()
 
         val capturedUnit = (defender as MapUnitCombatant).unit
         capturedUnit.civInfo.addNotification("An enemy ["+attacker.getName()+"] has captured our ["+defender.getName()+"]",
@@ -297,7 +304,16 @@ object Battle {
             capturedUnit.civInfo.removeUnit(capturedUnit)
             capturedUnit.assignOwner(attacker.getCivInfo())
         }
+
+        destroyIfDefeated(defenderCiv,attacker.getCivInfo())
         capturedUnit.updateVisibleTiles()
+    }
+
+    fun destroyIfDefeated(attackedCiv:CivilizationInfo, attacker: CivilizationInfo){
+        if (attackedCiv.isDefeated()) {
+            attackedCiv.destroy()
+            attacker.popupAlerts.add(PopupAlert(AlertType.Defeated, attackedCiv.civName))
+        }
     }
 
     const val NUKE_RADIUS = 2
@@ -315,6 +331,7 @@ object Battle {
                     city.population.unassignExtraPopulation()
                     continue
                 }
+                destroyIfDefeated(city.civInfo,attackingCiv)
             }
 
             for(unit in tile.getUnits()){
@@ -325,10 +342,10 @@ object Battle {
                         && unit.civInfo.getDiplomacyManager(attackingCiv).canDeclareWar()){
                     unit.civInfo.getDiplomacyManager(attackingCiv).declareWar()
                 }
+
+                destroyIfDefeated(unit.civInfo, attackingCiv)
             }
 
-            if (tile.militaryUnit != null) tile.militaryUnit!!.destroy()
-            if (tile.civilianUnit != null) tile.civilianUnit!!.destroy()
             tile.improvement = null
             tile.improvementInProgress = null
             tile.turnsToImprovement = 0
