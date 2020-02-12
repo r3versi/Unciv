@@ -1,3 +1,49 @@
+## 3.5.12
+
+Mongolian civ added! - by reversi
+
+By Jack Rainy:
+- Improvements to the Diplomacy overview: better spread and can select specific civs
+- Research screen centered on current tech
+
+Resolved #1859 - skip defeated players' turns in multiplayer
+
+Fixed bug where air units in transports couldn't upgrade
+
+Tied the unit upkeep scaling to game speed - by lyrjie
+
+Translation updates
+
+## 3.5.11
+
+Rectangular maps and better map generation - by reversi
+
+Resolved #1847 - Civs defeated by a nuke are now properly destroyed
+
+Resolved #1844 - improved worker automation
+
+Resolved #1852 - buildings requiring an improved resource now accept resources with great improvements
+
+Solved the 'infinite warmongering penalty' bug
+
+Resolved #1858 - Automated workers build unique improvements
+
+Translation updates
+
+## 3.5.10
+
+Resolved #1827 - can no longer see other (current) player's city production in multiplayer
+
+Resolved #1839 - Civs no longer declare war and offer things in the same turn
+
+AI no longer sends 'please don't settle cities near us' warnings when at war
+
+When disbanding carriers, transported air units move to nearby tiles if they can. If they can't then they're disbanded.
+
+Resolved #1457 - no AI-to-AI trades are 'automatically accepted'
+
+Translation updates
+
 ## 3.5.9
 
 Resolved #1820 - Fixed a crashing bug with the AI trying to ally with defeated city states, as well as many other minor bugs
