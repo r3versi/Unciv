@@ -18,6 +18,8 @@ object MapType {
     const val continents = "Continents"
     const val perlin = "Perlin"
     const val archipelago = "Archipelago"
+    const val warpPerlin = "warp perlin"
+    const val diverseArchipelago = "Diverse Archipelago"
 
     // Cellular automata
     const val default = "Default"

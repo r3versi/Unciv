@@ -97,7 +97,6 @@ class MapGenerator(val ruleset: Ruleset) {
     }
 
     private fun randomizeTiles(tileMap: TileMap) {
-
         for (tile in tileMap.values) {
             if (tile.getBaseTerrain().type == TerrainType.Land && RNG.nextDouble() < tileMap.mapParameters.mountainProbability) {
                 tile.baseTerrain = Constants.mountain
@@ -565,6 +564,8 @@ class MapGenerator(val ruleset: Ruleset) {
                 MapType.continents -> createTwoContinents(tileMap)
                 MapType.perlin -> createPerlin(tileMap)
                 MapType.archipelago -> createArchipelago(tileMap)
+                MapType.warpPerlin -> createWarpPerlin(tileMap)
+                MapType.diverseArchipelago -> createDiverseArchipelago(tileMap)
                 MapType.default -> generateLandCellularAutomata(tileMap)
             }
         }
@@ -598,7 +599,34 @@ class MapGenerator(val ruleset: Ruleset) {
             val elevationSeed = RNG.nextInt().toDouble()
             for (tile in tileMap.values) {
                 var elevation = getRidgedPerlinNoise(tile, elevationSeed)-0.25
+                when {
+                    elevation < 0 -> tile.baseTerrain = Constants.ocean
+                    else -> tile.baseTerrain = Constants.grassland
+                }
+            }
+        }
 
+        private fun createWarpPerlin(tileMap: TileMap) {
+            val elevationSeed = RNG.nextInt().toDouble()
+            for (tile in tileMap.values) {
+                val elevation = getNormalWarpPerlinNoise(tile, elevationSeed)
+                when {
+                    elevation < 0 -> tile.baseTerrain = Constants.ocean
+                    else -> tile.baseTerrain = Constants.grassland
+                }
+            }
+        }
+
+        private fun createDiverseArchipelago(tileMap: TileMap) {
+            val elevationSeed1 = RNG.nextInt().toDouble()
+            val elevationSeed2 = RNG.nextInt().toDouble()
+            for (tile in tileMap.values) {
+                val noise1 = getNormalWarpPerlinNoise(tile, elevationSeed1, scale = 15.0)
+                val noise2 = getRidgedPerlinNoise(tile, elevationSeed2)
+
+                val weight = 4.0
+
+                val elevation = noise1 + noise2*weight-1.08
                 when {
                     elevation < 0 -> tile.baseTerrain = Constants.ocean
                     else -> tile.baseTerrain = Constants.grassland
@@ -673,6 +701,15 @@ class MapGenerator(val ruleset: Ruleset) {
                                          scale: Double = 15.0): Double {
             val worldCoords = HexMath.hex2WorldCoords(tile.position)
             return Perlin.ridgedNoise3d(worldCoords.x.toDouble(), worldCoords.y.toDouble(), seed, nOctaves, persistence, lacunarity, scale)
+        }
+
+        private fun getNormalWarpPerlinNoise(tile: TileInfo, seed: Double,
+                                             nOctaves: Int = 10,
+                                             persistence: Double = 0.5,
+                                             lacunarity: Double = 2.0,
+                                             scale: Double = 40.0): Double {
+            val worldCoords = HexMath.hex2WorldCoords(tile.position)
+            return Perlin.normalWarpNoise3d(worldCoords.x.toDouble(), worldCoords.y.toDouble(), seed, nOctaves, persistence, lacunarity, scale)
         }
 
         // region Cellular automata
